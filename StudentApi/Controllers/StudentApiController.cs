@@ -119,6 +119,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using StudentApi.Data;
 using StudentApi.Models;
 using System.Collections.Generic;
 using System.Linq;
@@ -129,11 +130,22 @@ namespace StudentApi.Controllers
     [ApiController]
     public class StudentApiController : ControllerBase
     {
+        private readonly ILogger<StudentApiController> logger;
+        private readonly StudentDbContext _studentDbContext;
+
+        public StudentApiController(ILogger<StudentApiController> logger, StudentDbContext studentDbContext)
+        {
+            this.logger = logger;
+            _studentDbContext = studentDbContext;
+        }
+
+
         [HttpGet("All", Name = "Get All Students")]
         public ActionResult<IEnumerable<StudentDTO>> GetStudents()
         {
             // Retrieve all students from the static CollegeRepository
-            var students = CollegeRepository.Students.Select(s => new StudentDTO()
+            this.logger.LogInformation("GetStudents Method Started");
+            var students = _studentDbContext.Students.Select(s => new StudentDTO()
             {
                 Id = s.Id,
                 Name = s.Name,
@@ -155,7 +167,7 @@ namespace StudentApi.Controllers
                 return BadRequest(); // 400 Bad Request
             }
 
-            var student = CollegeRepository.Students.FirstOrDefault(n => n.Id == id);
+            var student = _studentDbContext.Students.FirstOrDefault(n => n.Id == id);
             if (student == null)
             {
                 return NotFound("Id Not Found"); // 404 Not Found
@@ -183,7 +195,7 @@ namespace StudentApi.Controllers
                 return BadRequest(); // 400 Bad Request
             }
 
-            var student = CollegeRepository.Students.FirstOrDefault(n => n.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+            var student = _studentDbContext.Students.FirstOrDefault(n => n.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
             if (student == null)
             {
                 return NotFound(); // 404 Not Found
@@ -212,17 +224,19 @@ namespace StudentApi.Controllers
                 return BadRequest();
             }
 
-            int newId = CollegeRepository.Students.LastOrDefault().Id + 1;
+           
             Student student = new Student()
             {
-                Id = newId,
+                
                 Name = model.Name,
                 Email = model.Email,
                 Address = model.Address
             };
-            CollegeRepository.Students.Add(student);
+
+            _studentDbContext.Students.Add(student);
+            _studentDbContext.SaveChanges();    
             model.Id = student.Id;
-            return Ok(model);
+            return CreatedAtRoute("Get Student By Id", new {id = model.Id},model);   
 
         }
 
@@ -238,13 +252,14 @@ namespace StudentApi.Controllers
                 return BadRequest(); // 400 Bad Request
             }
 
-            var student = CollegeRepository.Students.FirstOrDefault(n => n.Id == id);
+            var student = _studentDbContext.Students.FirstOrDefault(n => n.Id == id);
             if (student == null)
             {
                 return NotFound("Id is not present"); // 404 Not Found
             }
 
-            CollegeRepository.Students.Remove(student);
+            _studentDbContext.Students.Remove(student);
+            _studentDbContext.SaveChanges();
             return Ok(true); // 200 OK with true status
         }
 
@@ -263,7 +278,7 @@ namespace StudentApi.Controllers
                 return BadRequest();
             }
 
-            var existingstudent=CollegeRepository.Students.Where(s => s.Id == model.Id).FirstOrDefault();
+            var existingstudent= _studentDbContext.Students.Where(s => s.Id == model.Id).FirstOrDefault();
             if (existingstudent == null)
             {
                 return NotFound();
@@ -273,6 +288,8 @@ namespace StudentApi.Controllers
             existingstudent.Name = model.Name;
             existingstudent.Email = model.Email;    
             existingstudent.Address = model.Address;
+
+            _studentDbContext.SaveChanges();
 
             return NoContent();
 
@@ -292,7 +309,7 @@ namespace StudentApi.Controllers
                 return BadRequest();
             }
 
-            var existingstudent = CollegeRepository.Students.Where(s => s.Id == id).FirstOrDefault();
+            var existingstudent = _studentDbContext.Students.Where(s => s.Id == id).FirstOrDefault();
             if (existingstudent == null)
             {
                 return NotFound();
@@ -317,6 +334,7 @@ namespace StudentApi.Controllers
             existingstudent.Name=studentDTO.Name;
             existingstudent.Email=studentDTO.Email;
             existingstudent.Address=studentDTO.Address;
+            _studentDbContext.SaveChanges();
 
             return NoContent();
 
