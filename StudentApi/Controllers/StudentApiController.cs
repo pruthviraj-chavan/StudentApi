@@ -342,6 +342,6 @@ namespace StudentApi.Controllers
 
         }
 
-
+        //patch is used for individually adding data 
     }
 }
