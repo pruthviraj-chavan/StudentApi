@@ -123,6 +123,7 @@ using StudentApi.Data;
 using StudentApi.Models;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.Xml;
 
 namespace StudentApi.Controllers
 {
@@ -145,6 +146,7 @@ namespace StudentApi.Controllers
         {
             // Retrieve all students from the static CollegeRepository
             this.logger.LogInformation("GetStudents Method Started");
+            //var students = _studentDbContext.Students.ToList();
             var students = _studentDbContext.Students.Select(s => new StudentDTO()
             {
                 Id = s.Id,
@@ -329,7 +331,7 @@ namespace StudentApi.Controllers
             {
                 return BadRequest();
             }
-
+            
 
             existingstudent.Name=studentDTO.Name;
             existingstudent.Email=studentDTO.Email;
