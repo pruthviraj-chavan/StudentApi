@@ -24,5 +24,6 @@ namespace StudentApi.Data.Config
                 new Student { Id = 2, Name = "raman", Email = "raman@gmail.com", Address = "mumbai" }
             });
         }
+
     }
 }
