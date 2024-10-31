@@ -8,9 +8,8 @@ namespace StudentApi.Configuration
     {
         public AutomapperConfig() 
         {
-            //CreateMap<StudentDTO,Student>();
             CreateMap<Student,StudentDTO>().ReverseMap();
-          
+            //CreateMap<StudentDTO,Student>();
 
         }
     }
