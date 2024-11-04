@@ -18,18 +18,19 @@ namespace StudentApi.Controllers
     {
         private readonly ILogger<StudentApiController> logger;
         //private readonly IStudentRepository _studentRepository;
-        private readonly ICollegeRepository<Student> _studentRepository;
-       
+        //private readonly ICollegeRepository<Student> _studentRepository;
+        private readonly IStudentRepository _studentRepository;
+
         private readonly IMapper _mapper;
    
-        private ICollegeRepository<Student> studentRepository;
+        //private ICollegeRepository<Student> studentRepository;
 
         public int Id { get; private set; }
         public string Name { get; private set; }
         public string Email { get; private set; }
         public string Address { get; private set; }
 
-        public StudentApiController(ILogger<StudentApiController> logger, IMapper mapper, ICollegeRepository<Student> studentRepository)
+        public StudentApiController(ILogger<StudentApiController> logger, IMapper mapper, IStudentRepository studentRepository)
         {
             this.logger = logger;
             _studentRepository = studentRepository;
@@ -64,7 +65,7 @@ namespace StudentApi.Controllers
                 return BadRequest(); // 400 Bad Request
             }
 
-            var student = await _studentRepository.GetByIdAsync(student => student.Id ==  id);
+            var student = await _studentRepository.GetAsync(student => student.Id ==  id);
             if (student == null)
             {
                 return NotFound("Id Not Found"); // 404 Not Found
@@ -88,7 +89,7 @@ namespace StudentApi.Controllers
                 return BadRequest(); // 400 Bad Request
             }
 
-            var student = await _studentRepository.GetByNameAsync(student => student.Name.ToLower().Contains(name));
+            var student = await _studentRepository.GetAsync(student => student.Name.ToLower().Contains(name));
             if (student == null)
             {
                 return NotFound(); // 404 Not Found
@@ -133,7 +134,7 @@ namespace StudentApi.Controllers
                 return BadRequest(); // 400 Bad Request
             }
 
-            var student = await _studentRepository.GetByIdAsync(student => student.Id == id);
+            var student = await _studentRepository.GetAsync(student => student.Id == id);
             if (student == null)
             {
                 return NotFound("Id is not present"); // 404 Not Found
@@ -159,7 +160,7 @@ namespace StudentApi.Controllers
                 return BadRequest();
             }
 
-            var existingStudent = await  _studentRepository.GetByIdAsync(student => student.Id == dto.Id,true);
+            var existingStudent = await  _studentRepository.GetAsync(student => student.Id == dto.Id,true);
             if (existingStudent == null)
             {
                 return NotFound();
@@ -194,7 +195,7 @@ namespace StudentApi.Controllers
                 return BadRequest();
             }
 
-            var existingstudent = await _studentRepository.GetByIdAsync(student => student.Id == id, true);
+            var existingstudent = await _studentRepository.GetAsync(student => student.Id == id, true);
             if (existingstudent == null)
             {
                 return NotFound();

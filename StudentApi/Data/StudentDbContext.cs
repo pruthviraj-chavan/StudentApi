@@ -17,13 +17,13 @@ namespace StudentApi.Data
             
         }
         public DbSet<Student> Students { get; set; }
-
+        public DbSet<Department> Departments { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
 
             modelBuilder.ApplyConfiguration(new StudentConfig()); //table 1
 
-            //modelBuilder.ApplyConfiguration(new NewConfig()); //table 2
+            modelBuilder.ApplyConfiguration(new DepartmentConfig()); //table 2
 
             //modelBuilder.ApplyConfiguration(new new1Config()); //table 3
 
@@ -31,10 +31,7 @@ namespace StudentApi.Data
 
         }
 
-        internal void SavedChangesAsync()
-        {
-            throw new NotImplementedException();
-        }
+        
     }
 
    

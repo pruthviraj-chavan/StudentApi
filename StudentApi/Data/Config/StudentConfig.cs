@@ -23,6 +23,8 @@ namespace StudentApi.Data.Config
                 new Student { Id = 1, Name = "Venkat", Email = "Example@gmail.com", Address = "Prel" },
                 new Student { Id = 2, Name = "raman", Email = "raman@gmail.com", Address = "mumbai" }
             });
+
+            builder.HasOne(x => x.Department).WithMany(x   => x.Students).HasForeignKey(x => x.DepartmentId).HasConstraintName("FK_Students_Department");
         }
 
     }
