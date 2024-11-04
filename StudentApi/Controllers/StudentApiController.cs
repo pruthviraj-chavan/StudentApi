@@ -1,126 +1,7 @@
-﻿//using Microsoft.AspNetCore.Http;
-//using Microsoft.AspNetCore.Mvc;
-//using StudentApi.Models;
-//using System.ComponentModel.DataAnnotations;
-
-//namespace StudentApi.Controllers
-//{
-//    [Route("api/[controller]")]
-//    [ApiController]
-//    public class StudentApiController : ControllerBase
-//    {
-//        [HttpGet("All", Name = "Get All Students")]
-
-//        public ActionResult<IEnumerable<StudentDTO>> GetStudents()
-//        {
-
-
-//            var students = CollegeRepository.Students.Select(s => new StudentDTO()
-//            {
-//                Id = s.Id,
-//                Name = s.Name,
-//                Email = s.Email,
-//                Address = s.Address
-//            });
-//            return Ok(students);
-//        }
-
-
-//        [HttpGet("{id:int}", Name = "Get All Students by Id")]
-//        [ProducesResponseType(200)]
-//        [ProducesResponseType(400)]
-//        [ProducesResponseType(404)]
-//        public ActionResult<StudentDTO> GetStudentById(int id)
-//        {
-//            if (id <= 0)
-//            {
-//                return BadRequest(); //400 code
-//            }
-
-//            var student = CollegeRepository.Students.Where(n => n.Id == id).FirstOrDefault();
-//            if (student == null)
-//            {
-//                return NotFound("Id Not Found");
-//            }
-//            var studentDTO = new StudentDTO()
-//            {
-//                Id = student.Id,
-//                Name = student.Name,
-//                Email = student.Email,
-//                Address = student.Address
-//            };
-
-//            return Ok(student); //200 success code
-//        }
-
-
-
-//        [HttpGet("{Name:alpha}", Name = "GetByName")]
-//        [ProducesResponseType(200)]
-//        [ProducesResponseType(400)]
-//        [ProducesResponseType(404)]
-//        public ActionResult<StudentDTO> GetStudentByName(string Name )
-//        {
-//            if (string.IsNullOrEmpty(Name))
-//            {
-//                return BadRequest();
-//            }
-//            var student = CollegeRepository.Students.FirstOrDefault(n => n.Name == Name);
-
-//            if (student == null)
-//            {
-//                return NotFound(); //404 not found
-//            }
-
-//            var studentDTO = new StudentDTO()
-//            {
-//                Id = student.Id,
-//                Name = student.Name,
-//                Email = student.Email,
-//                Address = student.Address
-//            };
-//            return Ok(student);
-//        }
-
-
-
-
-
-
-//        [HttpDelete("{id}", Name = "DeleteStudent")]
-//        [ProducesResponseType(200)]
-//        [ProducesResponseType(400)]
-//        [ProducesResponseType(404)]
-//        [ProducesResponseType(500)]
-
-//        public ActionResult<bool> DeleteStudent(int id)
-//        {
-//            if (id <= 0)
-//            {
-//                return BadRequest();
-//            }
-
-//            var student = CollegeRepository.Students.Where(n => n.Id == id).FirstOrDefault();
-//            if (student == null)
-//            {
-//                return NotFound("id is not present");
-//            }
-
-//            CollegeRepository.Students.Remove(student);
-
-//            return Ok(true);
-//        }
-
-
-//    }
-//}
-
-
-using AutoMapper;
+﻿using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using StudentApi.Data;
 using StudentApi.Models;
 using System.Collections.Generic;
@@ -128,6 +9,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Security.Cryptography.Xml;
 using AutoMapper;
+using StudentApi.Data.Repository;
 namespace StudentApi.Controllers
 {
     [Route("api/[controller]")]
@@ -135,7 +17,8 @@ namespace StudentApi.Controllers
     public class StudentApiController : ControllerBase
     {
         private readonly ILogger<StudentApiController> logger;
-        private readonly StudentDbContext _studentDbContext;
+        private readonly IStudentRepository _studentRepository;
+       
         private readonly IMapper _mapper;
         private readonly IMapper mapper;
 
@@ -144,10 +27,11 @@ namespace StudentApi.Controllers
         public string Email { get; private set; }
         public string Address { get; private set; }
 
-        public StudentApiController(ILogger<StudentApiController> logger, StudentDbContext studentDbContext, IMapper mapper)
+        public StudentApiController(ILogger<StudentApiController> logger, IMapper mapper , IStudentRepository studentRepository)
         {
             this.logger = logger;
-            _studentDbContext = studentDbContext;
+            _studentRepository = studentRepository;
+            
             _mapper = mapper;
         }
 
@@ -158,7 +42,7 @@ namespace StudentApi.Controllers
             // Retrieve all students from the static CollegeRepository
             this.logger.LogInformation("GetStudents Method Started");
             //var students = _studentDbContext.Students.ToList();
-            var students = await _studentDbContext.Students.ToListAsync();
+            var students = await _studentRepository.GetAllAsync();
             //{
             //    Id = s.Id,
             //    Name = s.Name,
@@ -183,7 +67,7 @@ namespace StudentApi.Controllers
                 return BadRequest(); // 400 Bad Request
             }
 
-            var student = await _studentDbContext.Students.FirstOrDefaultAsync(n => n.Id == id);
+            var student = await _studentRepository.GetByIdAsync(id);
             if (student == null)
             {
                 return NotFound("Id Not Found"); // 404 Not Found
@@ -207,7 +91,7 @@ namespace StudentApi.Controllers
                 return BadRequest(); // 400 Bad Request
             }
 
-            var student = await _studentDbContext.Students.FirstOrDefaultAsync(n => n.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+            var student = await _studentRepository.GetByNameAsync(name);
             if (student == null)
             {
                 return NotFound(); // 404 Not Found
@@ -233,9 +117,9 @@ namespace StudentApi.Controllers
            
             Student student = _mapper.Map<Student>(dto);
 
-            await _studentDbContext.Students.AddAsync(student);
-            await _studentDbContext.SaveChangesAsync();
-            dto.Id = student.Id;
+            var id = await _studentRepository.CreateAsync(student);
+          
+            dto.Id = id;
             return CreatedAtRoute("Get Student By Id", new {id = dto.Id}, dto);   
 
         }
@@ -252,14 +136,14 @@ namespace StudentApi.Controllers
                 return BadRequest(); // 400 Bad Request
             }
 
-            var student = await _studentDbContext.Students.FirstOrDefaultAsync(n => n.Id == id);
+            var student = await _studentRepository.GetByIdAsync(id);
             if (student == null)
             {
                 return NotFound("Id is not present"); // 404 Not Found
             }
 
-            _studentDbContext.Students.Remove(student);
-            await _studentDbContext.SaveChangesAsync();
+           
+            await _studentRepository.DeleteAsync(student);
             return Ok(true); // 200 OK with true status
         }
 
@@ -278,7 +162,7 @@ namespace StudentApi.Controllers
                 return BadRequest();
             }
 
-            var existingstudent = await  _studentDbContext.Students.AsNoTracking().Where(s => s.Id == dto.Id).FirstOrDefaultAsync();
+            var existingstudent = await  _studentRepository.GetByIdAsync(dto.Id,true);
             if (existingstudent == null)
             {
                 return NotFound();
@@ -286,14 +170,14 @@ namespace StudentApi.Controllers
 
             var newRecord = _mapper.Map<Student>(dto);
 
-            _studentDbContext.Students.Update(newRecord);
+          
 
             //existingstudent.Id = model.Id;
             //existingstudent.Name = model.Name;
             //existingstudent.Email = model.Email;    
             //existingstudent.Address = model.Address;
 
-            await _studentDbContext.SaveChangesAsync();
+            await _studentRepository.UpdateAsync(newRecord);
 
             return NoContent();
 
@@ -313,7 +197,7 @@ namespace StudentApi.Controllers
                 return BadRequest();
             }
 
-            var existingstudent = await  _studentDbContext.Students.AsNoTracking().Where(s => s.Id == id).FirstOrDefaultAsync();
+            var existingstudent = await _studentRepository.GetByIdAsync(id, true);
             if (existingstudent == null)
             {
                 return NotFound();
@@ -329,14 +213,14 @@ namespace StudentApi.Controllers
             }
 
             existingstudent = _mapper.Map<Student>(studentDTO);
-            _studentDbContext.Students.Update(existingstudent);
+         
 
             //existingstudent = _mapper.Map<Student>(studentDTO);
             //existingstudent.Name=studentDTO.Name;
             //existingstudent.Email=studentDTO.Email;
             //existingstudent.Address=studentDTO.Address;
 
-            await _studentDbContext.SaveChangesAsync();
+            await _studentRepository.UpdateAsync(existingstudent);
 
             return NoContent();
 

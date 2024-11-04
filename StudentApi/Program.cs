@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using StudentApi.Configuration;
 using StudentApi.Data;
+using StudentApi.Data.Repository;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +11,8 @@ builder.Services.AddControllers().AddNewtonsoftJson();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+//builder.Services.AddTransient<ILogger, LogToServerMemory>();
+builder.Services.AddTransient<IStudentRepository , StudentRepository>();
 builder.Services.AddAutoMapper(typeof(AutomapperConfig));
 
 builder.Services.AddDbContext<StudentDbContext>(options => {
