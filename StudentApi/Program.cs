@@ -12,7 +12,10 @@ builder.Services.AddControllers().AddNewtonsoftJson();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 //builder.Services.AddTransient<ILogger, LogToServerMemory>();
-builder.Services.AddTransient<IStudentRepository , StudentRepository>();
+
+builder.Services.AddScoped<IStudentRepository , StudentRepository>();
+builder.Services.AddScoped(typeof(ICollegeRepository<>), typeof(CollegeRepository<>));
+
 builder.Services.AddAutoMapper(typeof(AutomapperConfig));
 
 builder.Services.AddDbContext<StudentDbContext>(options => {

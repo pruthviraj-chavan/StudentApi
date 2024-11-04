@@ -17,17 +17,19 @@ namespace StudentApi.Controllers
     public class StudentApiController : ControllerBase
     {
         private readonly ILogger<StudentApiController> logger;
-        private readonly IStudentRepository _studentRepository;
+        //private readonly IStudentRepository _studentRepository;
+        private readonly ICollegeRepository<Student> _studentRepository;
        
         private readonly IMapper _mapper;
-        private readonly IMapper mapper;
+   
+        private ICollegeRepository<Student> studentRepository;
 
         public int Id { get; private set; }
         public string Name { get; private set; }
         public string Email { get; private set; }
         public string Address { get; private set; }
 
-        public StudentApiController(ILogger<StudentApiController> logger, IMapper mapper , IStudentRepository studentRepository)
+        public StudentApiController(ILogger<StudentApiController> logger, IMapper mapper, ICollegeRepository<Student> studentRepository)
         {
             this.logger = logger;
             _studentRepository = studentRepository;
@@ -43,12 +45,7 @@ namespace StudentApi.Controllers
             this.logger.LogInformation("GetStudents Method Started");
             //var students = _studentDbContext.Students.ToList();
             var students = await _studentRepository.GetAllAsync();
-            //{
-            //    Id = s.Id,
-            //    Name = s.Name,
-            //    Email = s.Email,
-            //    Address = s.Address
-            //}).ToListAsync(); // Ensure to call ToList() to execute the query
+
 
             var studentDTOData = _mapper.Map<List<StudentDTO>>(students);
 
@@ -60,14 +57,14 @@ namespace StudentApi.Controllers
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<ActionResult<StudentDTO>> GetStudentById(int id)
+        public async Task<ActionResult<StudentDTO>> GetStudentByIdAsync(int id)
         {
             if (id <= 0)
             {
                 return BadRequest(); // 400 Bad Request
             }
 
-            var student = await _studentRepository.GetByIdAsync(id);
+            var student = await _studentRepository.GetByIdAsync(student => student.Id ==  id);
             if (student == null)
             {
                 return NotFound("Id Not Found"); // 404 Not Found
@@ -84,14 +81,14 @@ namespace StudentApi.Controllers
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public async Task<ActionResult<StudentDTO>> GetStudentByName(string name)
+        public async Task<ActionResult<StudentDTO>> GetStudentByNameAsync(string name)
         {
             if (string.IsNullOrEmpty(name))
             {
                 return BadRequest(); // 400 Bad Request
             }
 
-            var student = await _studentRepository.GetByNameAsync(name);
+            var student = await _studentRepository.GetByNameAsync(student => student.Name.ToLower().Contains(name));
             if (student == null)
             {
                 return NotFound(); // 404 Not Found
@@ -117,9 +114,9 @@ namespace StudentApi.Controllers
            
             Student student = _mapper.Map<Student>(dto);
 
-            var id = await _studentRepository.CreateAsync(student);
+            var studentAfterCreation = await _studentRepository.CreateAsync(student);
           
-            dto.Id = id;
+            dto.Id = studentAfterCreation.Id;
             return CreatedAtRoute("Get Student By Id", new {id = dto.Id}, dto);   
 
         }
@@ -136,7 +133,7 @@ namespace StudentApi.Controllers
                 return BadRequest(); // 400 Bad Request
             }
 
-            var student = await _studentRepository.GetByIdAsync(id);
+            var student = await _studentRepository.GetByIdAsync(student => student.Id == id);
             if (student == null)
             {
                 return NotFound("Id is not present"); // 404 Not Found
@@ -162,8 +159,8 @@ namespace StudentApi.Controllers
                 return BadRequest();
             }
 
-            var existingstudent = await  _studentRepository.GetByIdAsync(dto.Id,true);
-            if (existingstudent == null)
+            var existingStudent = await  _studentRepository.GetByIdAsync(student => student.Id == dto.Id,true);
+            if (existingStudent == null)
             {
                 return NotFound();
             }
@@ -197,7 +194,7 @@ namespace StudentApi.Controllers
                 return BadRequest();
             }
 
-            var existingstudent = await _studentRepository.GetByIdAsync(id, true);
+            var existingstudent = await _studentRepository.GetByIdAsync(student => student.Id == id, true);
             if (existingstudent == null)
             {
                 return NotFound();
