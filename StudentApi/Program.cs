@@ -16,6 +16,18 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IStudentRepository , StudentRepository>();
 builder.Services.AddScoped(typeof(ICollegeRepository<>), typeof(CollegeRepository<>));
 
+builder.Services.AddCors(options => options.AddPolicy("MyTestCors", policy =>
+{
+    //allow only few origins
+    //policy.WithOrigins("http://localhost:4200");
+
+    //allowing all origins
+    //policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod(); //methods are get post etc 
+
+
+
+}));
+
 builder.Services.AddAutoMapper(typeof(AutomapperConfig));
 
 builder.Services.AddDbContext<StudentDbContext>(options => {
@@ -34,6 +46,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors("MyTestCors");
 
 app.UseAuthorization();
 
