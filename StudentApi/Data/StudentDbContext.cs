@@ -18,6 +18,8 @@ namespace StudentApi.Data
         }
         public DbSet<Student> Students { get; set; }
         public DbSet<Department> Departments { get; set; }
+
+        public DbSet<Department> user { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
 
@@ -25,7 +27,7 @@ namespace StudentApi.Data
 
             modelBuilder.ApplyConfiguration(new DepartmentConfig()); //table 2
 
-            //modelBuilder.ApplyConfiguration(new new1Config()); //table 3
+            modelBuilder.ApplyConfiguration(new UserConfig()); //table 3
 
 
 
