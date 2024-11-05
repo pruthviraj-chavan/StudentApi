@@ -11,12 +11,14 @@ using System.Security.Cryptography.Xml;
 using AutoMapper;
 using StudentApi.Data.Repository;
 using Microsoft.AspNetCore.Cors;
+using Microsoft.AspNetCore.Authorization;
 namespace StudentApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     //[EnableCors(PolicyName = "AllowOnlyGoogle")] //for origin we use cors policy
     //[EnableCors()] //default policy
+    [Authorize(AuthenticationSchemes = "LoginForLocal", Roles = "Superadmin , Admin")] //who can access this 
     public class StudentApiController : ControllerBase
     {
         private readonly ILogger<StudentApiController> logger;
@@ -43,6 +45,12 @@ namespace StudentApi.Controllers
 
 
         [HttpGet("All", Name = "Get All Students")]
+        //[AllowAnonymous] //any one can accesss this method without authentication
+
+        [ProducesResponseType(200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(401)]
         public async Task<ActionResult<IEnumerable<StudentDTO>>> GetStudents()
         {
             // Retrieve all students from the static CollegeRepository
@@ -61,6 +69,7 @@ namespace StudentApi.Controllers
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
+        [ProducesResponseType(401)]
         //[EnableCors()] //for this method only
         //[DisableCors()] //for disabling cors for particular method
         public async Task<ActionResult<StudentDTO>> GetStudentByIdAsync(int id)
@@ -87,6 +96,7 @@ namespace StudentApi.Controllers
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
+        [ProducesResponseType(401)]
         //[EnableCors()] //for this method only
         //[DisableCors()] //for disabling cors for particular method
         public async Task<ActionResult<StudentDTO>> GetStudentByNameAsync(string name)
@@ -111,7 +121,7 @@ namespace StudentApi.Controllers
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        [ProducesResponseType(500)]
+        [ProducesResponseType(401)]
         //[EnableCors()] //for this method only
         //[DisableCors()] //for disabling cors for particular method
         public async Task<ActionResult<StudentDTO>> CreateStudent([FromBody] StudentDTO dto)
@@ -135,7 +145,7 @@ namespace StudentApi.Controllers
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        [ProducesResponseType(500)]
+        [ProducesResponseType(401)]
         //[EnableCors()] //for this method only
         //[DisableCors()] //for disabling cors for particular method
         public async Task<ActionResult<bool>> DeleteStudent(int id)
@@ -162,7 +172,7 @@ namespace StudentApi.Controllers
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        [ProducesResponseType(500)]
+        [ProducesResponseType(401)]
         //[EnableCors()] //for this method only
         //[DisableCors()] //for disabling cors for particular method
         public async Task<ActionResult<StudentDTO>> UpdateStudent([FromBody] StudentDTO dto)
@@ -199,7 +209,7 @@ namespace StudentApi.Controllers
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        [ProducesResponseType(500)]
+        [ProducesResponseType(401)]
         //[EnableCors()] //for this method only
         //[DisableCors()] //for disabling cors for particular method
         public async Task<ActionResult<StudentDTO>> UpdateStudentPartial(int id ,[FromBody] JsonPatchDocument<StudentDTO> patchDocument)
