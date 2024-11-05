@@ -35,15 +35,31 @@ namespace StudentApi.Controllers
                 return BadRequest("invalid credentials");
             }
 
-            LoginResponseDTO response = new () { Username = model.Username};
+            LoginResponseDTO response = new() { Username = model.Username };
+            string audience = string.Empty;
+            string issuer = string.Empty;
 
             byte[] key = null;
             if (model.Policy == "Local")
+            {
+                issuer = _configuration.GetValue<string>("LocalIssuer");
+                audience = _configuration.GetValue<string>("LocalAudience");
                 key = Encoding.ASCII.GetBytes(_configuration.GetValue<string>("JWTLocal"));
+            }
+
             else if (model.Policy == "Microsoft")
+            {
+                issuer = _configuration.GetValue<string>("MicrosoftIssuer");
+                audience = _configuration.GetValue<string>("MicrosoftAudience");
                 key = Encoding.ASCII.GetBytes(_configuration.GetValue<string>("JWTMicrosoft"));
+            }
+
             else if (model.Policy == "Google")
+            {
+                issuer = _configuration.GetValue<string>("GoogleIssuer");
+                audience = _configuration.GetValue<string>("GoogleAudience");
                 key = Encoding.ASCII.GetBytes(_configuration.GetValue<string>("JWTGoogle"));
+            }
 
 
 
@@ -53,7 +69,7 @@ namespace StudentApi.Controllers
 
 
 
-            if (model.Username == "Infomatics" && model.Password == "Infomatics123")
+            if (model.Username == "Admin" && model.Password == "Admin")
             {
                 
 
@@ -62,8 +78,11 @@ namespace StudentApi.Controllers
                 var tokenHandler = new JwtSecurityTokenHandler();
                 var tokenDescriptor = new SecurityTokenDescriptor()
                 {
+                    Issuer = issuer,
+                    Audience = audience,
                     Subject = new System.Security.Claims.ClaimsIdentity(new Claim[]
                     {
+
                         new Claim(ClaimTypes.Name, model.Username),
                         new Claim(ClaimTypes.Role,"Admin")
                     }),

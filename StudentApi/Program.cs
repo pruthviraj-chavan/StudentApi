@@ -110,6 +110,12 @@ options.UseSqlServer(builder.Configuration.GetConnectionString("StudentDbConnect
 var key3 = Encoding.ASCII.GetBytes(builder.Configuration.GetValue<string>("JWTLocal")); 
 var key1 = Encoding.ASCII.GetBytes(builder.Configuration.GetValue<string>("JWTGoogle"));
 var key2 = Encoding.ASCII.GetBytes(builder.Configuration.GetValue<string>("JWTMicrosoft"));
+string GoogleAudience = builder.Configuration.GetValue<string>("GoogleAudience");
+string MicrosoftAudience = builder.Configuration.GetValue<string>("MicrosoftAudience");
+string LocalAudience = builder.Configuration.GetValue<string>("LocalAudience");
+string GoogleIssuer = builder.Configuration.GetValue<string>("GoogleIssuer");
+string MicrosoftIssuer = builder.Configuration.GetValue<string>("MicrosoftIssuer");
+string LocalIssuer = builder.Configuration.GetValue<string>("LocalIssuer");
 
 //injecting JWT authentication dependancy configuration
 
@@ -126,8 +132,10 @@ builder.Services.AddAuthentication(options =>
     {
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(key1),
-        ValidateIssuer = false,
-        ValidateAudience = false,
+        ValidateIssuer = true,
+        ValidIssuer=GoogleIssuer,
+        ValidateAudience = true,
+        ValidAudience=GoogleAudience
     };
 }).AddJwtBearer("LoginForMicrosoft", options =>
 {
@@ -137,8 +145,10 @@ builder.Services.AddAuthentication(options =>
     {
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(key2),
-        ValidateIssuer = false,
-        ValidateAudience = false,
+        ValidateIssuer = true,
+        ValidIssuer=MicrosoftIssuer,
+        ValidateAudience = true,
+        ValidAudience=MicrosoftAudience
     };
 }).AddJwtBearer("LoginForLocal", options =>
 {
@@ -148,8 +158,10 @@ builder.Services.AddAuthentication(options =>
     {
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(key3),
-        ValidateIssuer = false,
-        ValidateAudience = false,
+        ValidateIssuer = true,
+        ValidIssuer=LocalIssuer,
+        ValidateAudience = true,
+        ValidAudience=LocalAudience
     };
 });
 
