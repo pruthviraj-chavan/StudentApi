@@ -12,6 +12,7 @@ using AutoMapper;
 using StudentApi.Data.Repository;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Authorization;
+using System.Net;
 namespace StudentApi.Controllers
 {
     [Route("api/[controller]")]
@@ -25,9 +26,10 @@ namespace StudentApi.Controllers
         //private readonly IStudentRepository _studentRepository;
         //private readonly ICollegeRepository<Student> _studentRepository;
         private readonly IStudentRepository _studentRepository;
+        private ApiResponse _apiResponse;
 
         private readonly IMapper _mapper;
-   
+
         //private ICollegeRepository<Student> studentRepository;
 
         public int Id { get; private set; }
@@ -39,8 +41,9 @@ namespace StudentApi.Controllers
         {
             this.logger = logger;
             _studentRepository = studentRepository;
-            
+
             _mapper = mapper;
+            _apiResponse = new();
         }
 
 
@@ -59,10 +62,12 @@ namespace StudentApi.Controllers
             var students = await _studentRepository.GetAllAsync();
 
 
-            var studentDTOData = _mapper.Map<List<StudentDTO>>(students);
+            _apiResponse.Data = _mapper.Map<List<StudentDTO>>(students);
+            _apiResponse.Status = true;
+            _apiResponse.StatusCode = HttpStatusCode.OK;
 
 
-            return Ok(studentDTOData);
+            return Ok(_apiResponse);
         }
 
         [HttpGet("{id:int}", Name = "Get Student by Id")]
@@ -79,17 +84,19 @@ namespace StudentApi.Controllers
                 return BadRequest(); // 400 Bad Request
             }
 
-            var student = await _studentRepository.GetAsync(student => student.Id ==  id);
+            var student = await _studentRepository.GetAsync(student => student.Id == id);
             if (student == null)
             {
                 return NotFound("Id Not Found"); // 404 Not Found
             }
 
-            var studentDTO = _mapper.Map<StudentDTO>(student);
-            
+            _apiResponse.Data = _mapper.Map<StudentDTO>(student);
+            _apiResponse.Status = true;
+            _apiResponse.StatusCode = HttpStatusCode.OK;
 
 
-            return Ok(studentDTO); // 200 OK with DTO
+
+            return Ok(_apiResponse); // 200 OK with DTO
         }
 
         [HttpGet("{name:alpha}", Name = "Get Student by Name")]
@@ -112,9 +119,11 @@ namespace StudentApi.Controllers
                 return NotFound(); // 404 Not Found
             }
 
-            var studentDTO = _mapper.Map<StudentDTO>(student);
+            _apiResponse.Data = _mapper.Map<StudentDTO>(student);
+            _apiResponse.Status = true;
+            _apiResponse.StatusCode = HttpStatusCode.OK;
 
-            return Ok(studentDTO); // 200 OK with DTO
+            return Ok(_apiResponse); // 200 OK with DTO
         }
 
         [HttpPost("Create")]
@@ -131,13 +140,17 @@ namespace StudentApi.Controllers
                 return BadRequest();
             }
 
-           
+
             Student student = _mapper.Map<Student>(dto);
 
             var studentAfterCreation = await _studentRepository.CreateAsync(student);
-          
+
             dto.Id = studentAfterCreation.Id;
-            return CreatedAtRoute("Get Student By Id", new {id = dto.Id}, dto);   
+            _apiResponse.Data = dto;
+            _apiResponse.Status = true;
+            _apiResponse.StatusCode = HttpStatusCode.OK;
+
+            return CreatedAtRoute("Get Student By Id", new { id = dto.Id }, _apiResponse);
 
         }
 
@@ -150,20 +163,32 @@ namespace StudentApi.Controllers
         //[DisableCors()] //for disabling cors for particular method
         public async Task<ActionResult<bool>> DeleteStudent(int id)
         {
-            if (id <= 0)
+            try
             {
-                return BadRequest(); // 400 Bad Request
+                //BadRequest - 400 - Badrequest - Client error
+                if (id <= 0)
+                    return BadRequest();
+
+                var student = await _studentRepository.GetAsync(student => student.Id == id);
+                //NotFound - 404 - NotFound - Client error
+                if (student == null)
+                    return NotFound($"The student with id {id} not found");
+
+                await _studentRepository.DeleteAsync(student);
+                _apiResponse.Data = true;
+                _apiResponse.Status = true;
+                _apiResponse.StatusCode = HttpStatusCode.OK;
+                //OK - 200 - Success
+                return Ok(_apiResponse);
+            }
+            catch (Exception ex)
+            {
+                _apiResponse.Errors.Add(ex.Message);
+                _apiResponse.StatusCode = HttpStatusCode.InternalServerError;
+                _apiResponse.Status = false;
+                return Ok(_apiResponse);
             }
 
-            var student = await _studentRepository.GetAsync(student => student.Id == id);
-            if (student == null)
-            {
-                return NotFound("Id is not present"); // 404 Not Found
-            }
-
-           
-            await _studentRepository.DeleteAsync(student);
-            return Ok(true); // 200 OK with true status
         }
 
 
@@ -177,30 +202,30 @@ namespace StudentApi.Controllers
         //[DisableCors()] //for disabling cors for particular method
         public async Task<ActionResult<StudentDTO>> UpdateStudent([FromBody] StudentDTO dto)
         {
-            
-            if (dto == null || dto.Id <= 0)
+
+            try
             {
-                return BadRequest();
-            }
+                if (dto == null || dto.Id <= 0)
+                    BadRequest();
 
-            var existingStudent = await  _studentRepository.GetAsync(student => student.Id == dto.Id,true);
-            if (existingStudent == null)
+                var existingStudent = await _studentRepository.GetAsync(student => student.Id == dto.Id, true);
+
+                if (existingStudent == null)
+                    return NotFound();
+
+                var newRecord = _mapper.Map<Student>(dto);
+
+                await _studentRepository.UpdateAsync(newRecord);
+
+                return NoContent();
+            }
+            catch (Exception ex)
             {
-                return NotFound();
+                _apiResponse.Errors.Add(ex.Message);
+                _apiResponse.StatusCode = HttpStatusCode.InternalServerError;
+                _apiResponse.Status = false;
+                return Ok(_apiResponse);
             }
-
-            var newRecord = _mapper.Map<Student>(dto);
-
-          
-
-            //existingstudent.Id = model.Id;
-            //existingstudent.Name = model.Name;
-            //existingstudent.Email = model.Email;    
-            //existingstudent.Address = model.Address;
-
-            await _studentRepository.UpdateAsync(newRecord);
-
-            return NoContent();
 
         }
 
@@ -212,43 +237,41 @@ namespace StudentApi.Controllers
         [ProducesResponseType(401)]
         //[EnableCors()] //for this method only
         //[DisableCors()] //for disabling cors for particular method
-        public async Task<ActionResult<StudentDTO>> UpdateStudentPartial(int id ,[FromBody] JsonPatchDocument<StudentDTO> patchDocument)
+        public async Task<ActionResult<StudentDTO>> UpdateStudentPartial(int id, [FromBody] JsonPatchDocument<StudentDTO> patchDocument)
         {
 
-            if (patchDocument == null || id <= 0)
+            try
             {
-                return BadRequest();
-            }
+                if (patchDocument == null || id <= 0)
+                    BadRequest();
 
-            var existingstudent = await _studentRepository.GetAsync(student => student.Id == id, true);
-            if (existingstudent == null)
+                var existingStudent = await _studentRepository.GetAsync(student => student.Id == id, true);
+
+                if (existingStudent == null)
+                    return NotFound();
+
+                var studentDTO = _mapper.Map<StudentDTO>(existingStudent);
+
+                patchDocument.ApplyTo(studentDTO, ModelState);
+
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                existingStudent = _mapper.Map<Student>(studentDTO);
+
+                await _studentRepository.UpdateAsync(existingStudent);
+
+                //204 - NoContent
+                return NoContent();
+            }
+            catch (Exception ex)
             {
-                return NotFound();
+                _apiResponse.Errors.Add(ex.Message);
+                _apiResponse.StatusCode = HttpStatusCode.InternalServerError;
+                _apiResponse.Status = false;
+                return Ok(_apiResponse);
             }
-
-            var studentDTO = _mapper.Map<StudentDTO>(existingstudent);
-
-            patchDocument.ApplyTo(studentDTO,ModelState);
-
-            if (!ModelState.IsValid)
-            {
-                return BadRequest();
-            }
-
-            existingstudent = _mapper.Map<Student>(studentDTO);
-         
-
-            //existingstudent = _mapper.Map<Student>(studentDTO);
-            //existingstudent.Name=studentDTO.Name;
-            //existingstudent.Email=studentDTO.Email;
-            //existingstudent.Address=studentDTO.Address;
-
-            await _studentRepository.UpdateAsync(existingstudent);
-
-            return NoContent();
 
         }
-
-        //patch is used for individually adding data 
     }
 }
