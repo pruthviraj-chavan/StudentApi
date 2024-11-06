@@ -14,7 +14,8 @@ namespace StudentApi.Data.Repository
         public bool IsDeleted { get; set; }
         public DateTime CreatedDate { get; set; }
         public DateTime ModifiedDate { get; set; }
-        //public virtual UserType UserType { get; set; }
+
+        public virtual UserType UserType { get; set; }
         //public virtual ICollection<UserRoleMapping> UserRoleMappings { get; set; }
         //Add-Migration <name>
         //Update-Database

@@ -3,6 +3,7 @@ using AutoMapper;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.SqlServer.Server;
 using StudentApi.Controllers;
+using StudentApi.Data;
 using StudentApi.Models;
 namespace StudentApi.Configuration
 {
@@ -17,6 +18,7 @@ namespace StudentApi.Configuration
             //CreateMap<StudentDTO, Student>().ReverseMap();
 
             CreateMap<StudentDTO, Student>().ReverseMap().ForMember(n => n.Address, opt => opt.MapFrom(n => string.IsNullOrEmpty(n.Address) ? "no address found" : n.Address)); //used for particular record to show no address found
+            CreateMap<RoleDTO, Role>().ReverseMap();
         }
     }
 }

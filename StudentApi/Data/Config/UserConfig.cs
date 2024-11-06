@@ -22,10 +22,10 @@ namespace StudentApi.Data.Config
             builder.Property(n => n.UserTypeId).IsRequired();
 
 
-            //builder.HasOne(n => n.UserType)
-            //   .WithMany(n => n.Users)
-            //   .HasForeignKey(n => n.UserTypeId)
-            //   .HasConstraintName("FK_Users_UserTypes");
+            builder.HasOne(n => n.UserType)
+               .WithMany(n => n.Users)
+               .HasForeignKey(n => n.UserTypeId)
+               .HasConstraintName("FK_Users_UserTypes");
         }
     }
 }

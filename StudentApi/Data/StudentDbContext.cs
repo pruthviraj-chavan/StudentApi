@@ -25,6 +25,8 @@ namespace StudentApi.Data
         public DbSet<Role> Roles { get; set; }
 
         public DbSet<RolePrivilege> RolePrivileges { get; set; }
+
+        public DbSet<UserType> UserTypes { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
 
@@ -37,6 +39,8 @@ namespace StudentApi.Data
             modelBuilder.ApplyConfiguration(new RoleConfig());
 
             modelBuilder.ApplyConfiguration(new RolePrivilegeConfig());
+
+            modelBuilder.ApplyConfiguration(new UserTypeConfig());
 
 
 
