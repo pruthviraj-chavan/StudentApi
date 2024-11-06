@@ -55,6 +55,26 @@ namespace StudentApi.Controllers
             //return CreatedAtRoute("GetRoleById", new { id = dto.Id }, apiResponse);
         }
 
+        [HttpGet]
+        [Route("All",Name ="GetAllRoles")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
 
+        public async Task<ActionResult<ApiResponse>> GetRolesAsync()
+        {
+            
+            var roles = await _roleRepository.GetAllAsync();
+
+            apiResponse.Data = roles;
+            apiResponse.Status = true;
+            apiResponse.StatusCode = HttpStatusCode.OK;
+
+            return Ok(apiResponse);
+
+        }
     }
 }
